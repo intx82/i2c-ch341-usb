@@ -26,30 +26,48 @@ clean:
 	make -C $(KERNEL_DIR) M=$(PWD) clean
 	rm -f examples/gpio_input examples/gpio_output
 
+install: pre-install do-install post-install
+
+uninstall: pre-uninstall do-uninstall post-uninstall
+
 ifeq ($(DKMS),)  # if DKMS is not installed
 
-install: $(MODULE_NAME).ko
+do-install: $(MODULE_NAME).ko
 	cp $(MODULE_NAME).ko $(MODULE_DIR)/kernel/drivers/i2c/busses
 	depmod
 	
-uninstall:
+do-uninstall: pre-uninstall
 	rm -f $(MODULE_DIR)/kernel/drivers/i2c/busses/$(MODULE_NAME).ko
 	depmod
 
 else  # if DKMS is installed
 
-install: $(MODULE_NAME).ko
+do-install: $(MODULE_NAME).ko
 ifneq ($(MODULE_INSTALLED),)
 	@echo Module $(MODULE_NAME) is installed ... uninstall it first
 	@make uninstall
 endif
 	@dkms install .
 	
-uninstall:
+do-uninstall:
 ifneq ($(MODULE_INSTALLED),)
 	dkms remove -m $(MODULE_NAME) -v $(MODULE_VERSION) --all
 	rm -rf /usr/src/$(MODULE_NAME)-$(MODULE_VERSION)
 endif
+
+pre-install:
+
+post-install:
+	modprobe -r ch341
+	modprobe i2c-ch341-usb
+	echo "blacklist ch341\nalias ch341 off" > /etc/modprobe.d/blacklist-ch341.conf && \
+	echo "blacklist spi-ch341-usb\nalias spi-ch341-usb off" >> /etc/modprobe.d/blacklist-ch341.conf
+
+pre-uninstall:
+	modprobe -r i2c-ch341-usb
+
+post-uninstall:
+	rm -f /etc/modprobe.d/blacklist-ch341.conf
 
 endif  # ifeq ($(DKMS),)
 

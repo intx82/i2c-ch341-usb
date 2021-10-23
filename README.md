@@ -70,14 +70,37 @@ In case you have not installed DKMS, command `sudo make install` simply copies t
 
 If you do not want to install the driver in the kernel directory at all because you only want to load it manually when needed, simply omit the `sudo make install`.
 
+**Please note**: To avoid conflicts with other CH341 drivers, the default kernel driver module `ch341` and the module [`spi-ch341-usb`](https://github.com/gschorcht/spi-ch341-usb) are automatically unloaded and blacklisted in `/etc/modprobe.d/blacklist-ch341.conf`. Also, the `i2c-ch341-usb` module is loaded to recognize the CH341 if it is already connected during installation.
+
+If you want to manage modules manually, just remove file `/etc/modprobe.d/blacklist-ch341.conf`.
+
 #### Loading
 
-Once the driver is installed, it should be loaded automatically when you connect a device with USB device id `1a86:5512`. If not try to figure out, whether the USB device is detected correctly using command
+Once the driver is installed, it should be loaded automatically when you connect a device with USB device ID `1a86:5512`. If the the device was detected correctly, you should be able to observe with command `dmesg` the following kernel messages which shows the current driver configuration:
+```
+$dmesg
+...
+[157204.238178] usb 1-4.4.2: new full-speed USB device number 90 using xhci_hcd
+[157204.343169] usb 1-4.4.2: New USB device found, idVendor=1a86, idProduct=5512, bcdDevice= 3.04
+[157204.343172] usb 1-4.4.2: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[157204.353747] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: output gpio0 gpio=0 irq=0 
+[157204.353749] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: output gpio1 gpio=1 irq=1 
+[157204.353751] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: output gpio2 gpio=2 irq=2 
+[157204.353752] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: output gpio3 gpio=3 irq=3 
+[157204.353753] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: input  gpio4 gpio=4 irq=4 (hwirq)
+[157204.353755] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: input  gpio5 gpio=5 irq=5 
+[157204.353756] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: input  gpio6 gpio=6 irq=6 
+[157204.353758] i2c-ch341-usb 1-4.4.2:1.0: ch341_cfg_probe: input  gpio7 gpio=7 irq=7 
+[157204.353925] i2c-ch341-usb 1-4.4.2:1.0: ch341_i2c_probe: created i2c device /dev/i2c-10
+[157204.353928] i2c-ch341-usb 1-4.4.2:1.0: ch341_i2c_set_speed: Change i2c bus speed to 100 kbps
+[157204.354656] i2c-ch341-usb 1-4.4.2:1.0: ch341_usb_probe: connected
+```
 
+If the device is not recignized or the driver is not loaded, try to figure out whether the USB device was detected correctly using command
 ```
 lsusb
 ```
-and try to load it manually with command:
+and try to load the driver manually with command:
 ```
 insmod i2c-ch341-usb.ko
 ```
@@ -92,7 +115,7 @@ in the source directory.
 
 #### Conflicts with CH341A USB to SPI Linux kernel driver
 
-Since the CH341A also provides an SPI interface as USB device with same id, you have to unload the driver module with
+Since the CH341A also provides an SPI interface as USB device with same ID, you have to unload the driver modulefirst  with
 
 ```
 rmmod i2c-ch341-usb
@@ -144,7 +167,7 @@ In this configuration, pins 15 to 18 are used as outputs while pins 19 to 22 are
 - The signal at the input pin that is configured to generate hardware interrupts (`hwirq` set to 1) **MUST** also be connected to the CH341A **INT** pin 7.
 - If there is no input that should generate hardware interrupts, set `hwirq` to 0 for all entries.
 
-If you want to use 6 GPIOs in output mode, you have to configure it with:
+If you want to use 6 GPIOs in output mode, you would have to configure the driver with:
 
 ```.c
 struct ch341_pin_config ch341_board_config[CH341_GPIO_NUM_PINS] =
