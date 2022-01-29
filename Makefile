@@ -25,13 +25,14 @@ all:
 
 clean:
 	make -C $(KERNEL_DIR) M=$(PWD) clean
-	rm -f examples/gpio_input examples/gpio_output
 
 ifeq ($(DKMS),)  # if DKMS is not installed
 
 install: $(MODULE_NAME).ko
 	cp $(MODULE_NAME).ko $(MODULE_DIR)/kernel/drivers/i2c/busses
 	depmod
+	modprobe -r $(MODULE_NAME) || true
+	modprobe $(MODULE_NAME)
 	
 uninstall:
 	rm -f $(MODULE_DIR)/kernel/drivers/i2c/busses/$(MODULE_NAME).ko
@@ -45,6 +46,8 @@ ifneq ($(MODULE_INSTALLED),)
 	@make uninstall
 endif
 	@dkms install .
+	modprobe -r $(MODULE_NAME) || true
+	modprobe $(MODULE_NAME)
 	
 uninstall:
 ifneq ($(MODULE_INSTALLED),)
