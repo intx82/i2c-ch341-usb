@@ -1,0 +1,7 @@
+i2c-ch341-usb.ko*
+i2c-ch341-usb.mod*
+i2c-ch341-usb.o
+.i2c*
+*module*
+*Module*
+.vscode/*

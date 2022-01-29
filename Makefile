@@ -15,6 +15,7 @@ endif
 
 MODULE_NAME  = i2c-ch341-usb
 obj-m       := $(MODULE_NAME).o   
+ccflags-y   := -std=gnu11 -Wno-declaration-after-statement
 
 $(MODULE_NAME).ko: $(MODULE_NAME).c
 	make -C $(KERNEL_DIR) M=$(PWD) modules
